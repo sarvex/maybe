@@ -32,15 +32,9 @@ def get_syscall_register():
     elif CPU_ARM:
         return "r7"
     elif RUNNING_LINUX:
-        if CPU_X86_64:
-            return "orig_rax"
-        else:
-            return "orig_eax"
+        return "orig_rax" if CPU_X86_64 else "orig_eax"
     else:
-        if CPU_X86_64:
-            return "rax"
-        else:
-            return "eax"
+        return "rax" if CPU_X86_64 else "eax"
 
 
 # Based on python-ptrace's PtraceSyscall.exit

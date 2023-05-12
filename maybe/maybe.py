@@ -127,11 +127,11 @@ def get_operations(debugger):
 def main():
     if len(argv) < 2:
         print(T.red("Error: No command given."))
-        print("Usage: %s COMMAND [ARGUMENT]..." % argv[0])
+        print(f"Usage: {argv[0]} COMMAND [ARGUMENT]...")
         exit(1)
 
     # This is basically "shlex.join"
-    command = " ".join([(("'%s'" % arg) if (" " in arg) else arg) for arg in argv[1:]])
+    command = " ".join([f"'{arg}'" if " " in arg else arg for arg in argv[1:]])
 
     arguments = argv[1:]
     arguments[0] = locateProgram(arguments[0])
@@ -139,7 +139,7 @@ def main():
     try:
         pid = createChild(arguments, False)
     except Exception as error:
-        print(T.red("Error executing %s: %s." % (T.bold(command) + T.red, error)))
+        print(T.red(f"Error executing {T.bold(command) + T.red}: {error}."))
         exit(1)
 
     debugger = PtraceDebugger()
@@ -156,10 +156,14 @@ def main():
     try:
         operations = get_operations(debugger)
     except Exception as error:
-        print(T.red("Error tracing process: %s." % error))
+        print(T.red(f"Error tracing process: {error}."))
         exit(1)
     except KeyboardInterrupt:
-        print(T.yellow("%s terminated by keyboard interrupt." % (T.bold(command) + T.yellow)))
+        print(
+            T.yellow(
+                f"{T.bold(command) + T.yellow} terminated by keyboard interrupt."
+            )
+        )
         exit(2)
     finally:
         # Cut down all processes no matter what happens
@@ -170,7 +174,7 @@ def main():
         print("%s has prevented %s from performing %d file system operations:\n" %
               (T.bold("maybe"), T.bold(command), len(operations)))
         for operation in operations:
-            print("  " + operation)
+            print(f"  {operation}")
         try:
             choice = input("\nDo you want to rerun %s and permit these operations? [y/N] " % T.bold(command))
         except KeyboardInterrupt:
@@ -178,5 +182,6 @@ def main():
         if choice.lower() == "y":
             call(argv[1:])
     else:
-        print("%s has not detected any file system operations from %s." %
-              (T.bold("maybe"), T.bold(command)))
+        print(
+            f'{T.bold("maybe")} has not detected any file system operations from {T.bold(command)}.'
+        )

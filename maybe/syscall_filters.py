@@ -19,7 +19,7 @@ from .utilities import T, format_permissions
 
 
 def format_delete(path):
-    return "%s %s" % (T.red("delete"), T.underline(abspath(path)))
+    return f'{T.red("delete")} {T.underline(abspath(path))}'
 
 
 def format_move(path_old, path_new):
@@ -30,12 +30,11 @@ def format_move(path_old, path_new):
         path_new = basename(path_new)
     else:
         label = "move"
-    return "%s %s to %s" % (T.green(label), T.underline(path_old), T.underline(path_new))
+    return f"{T.green(label)} {T.underline(path_old)} to {T.underline(path_new)}"
 
 
 def format_change_permissions(path, permissions):
-    return "%s of %s to %s" % (T.yellow("change permissions"), T.underline(abspath(path)),
-                               T.bold(format_permissions(permissions)))
+    return f'{T.yellow("change permissions")} of {T.underline(abspath(path))} to {T.bold(format_permissions(permissions))}'
 
 
 def format_change_owner(path, owner, group):
@@ -47,17 +46,17 @@ def format_change_owner(path, owner, group):
         owner = getpwuid(owner)[0]
     else:
         label = "change owner"
-        owner = getpwuid(owner)[0] + ":" + getgrgid(group)[0]
-    return "%s of %s to %s" % (T.yellow(label), T.underline(abspath(path)), T.bold(owner))
+        owner = f"{getpwuid(owner)[0]}:{getgrgid(group)[0]}"
+    return f"{T.yellow(label)} of {T.underline(abspath(path))} to {T.bold(owner)}"
 
 
 def format_create_directory(path):
-    return "%s %s" % (T.cyan("create directory"), T.underline(abspath(path)))
+    return f'{T.cyan("create directory")} {T.underline(abspath(path))}'
 
 
 def format_create_link(path_source, path_target, symbolic):
     label = "create symbolic link" if symbolic else "create hard link"
-    return "%s from %s to %s" % (T.cyan(label), T.underline(abspath(path_source)), T.underline(abspath(path_target)))
+    return f"{T.cyan(label)} from {T.underline(abspath(path_source))} to {T.underline(abspath(path_target))}"
 
 
 # Start with a large number to avoid collisions with other FDs
@@ -77,7 +76,7 @@ def get_file_descriptor_path(file_descriptor):
     return file_descriptors.get(file_descriptor, "/dev/fd/%d" % file_descriptor)
 
 
-allowed_files = set(["/dev/null", "/dev/zero", "/dev/tty"])
+allowed_files = {"/dev/null", "/dev/zero", "/dev/tty"}
 
 
 def format_open(path, flags):
@@ -85,9 +84,9 @@ def format_open(path, flags):
     if path in allowed_files:
         return None
     elif (flags & O_CREAT) and not exists(path):
-        return "%s %s" % (T.cyan("create file"), T.underline(path))
+        return f'{T.cyan("create file")} {T.underline(path)}'
     elif (flags & O_TRUNC) and exists(path):
-        return "%s %s" % (T.red("truncate file"), T.underline(path))
+        return f'{T.red("truncate file")} {T.underline(path)}'
     else:
         return None
 
@@ -120,7 +119,7 @@ def format_mknod(path, type):
     else:
         # mknod(2): "Zero file type is equivalent to type S_IFREG"
         label = "create file"
-    return "%s %s" % (T.cyan(label), T.underline(path))
+    return f"{T.cyan(label)} {T.underline(path)}"
 
 
 def substitute_mknod(path, type):
@@ -130,7 +129,7 @@ def substitute_mknod(path, type):
 def format_write(file_descriptor, byte_count):
     if file_descriptor in file_descriptors:
         path = file_descriptors[file_descriptor]
-        return "%s %s to %s" % (T.red("write"), T.bold("%d bytes" % byte_count), T.underline(path))
+        return f'{T.red("write")} {T.bold("%d bytes" % byte_count)} to {T.underline(path)}'
     else:
         return None
 
@@ -140,14 +139,13 @@ def substitute_write(file_descriptor, byte_count):
 
 
 def substitute_dup(file_descriptor_old, file_descriptor_new=None):
-    if file_descriptor_old in file_descriptors:
-        if file_descriptor_new is None:
-            file_descriptor_new = get_next_file_descriptor()
-        # Copy tracked file descriptor
-        file_descriptors[file_descriptor_new] = file_descriptors[file_descriptor_old]
-        return file_descriptor_new
-    else:
+    if file_descriptor_old not in file_descriptors:
         return None
+    if file_descriptor_new is None:
+        file_descriptor_new = get_next_file_descriptor()
+    # Copy tracked file descriptor
+    file_descriptors[file_descriptor_new] = file_descriptors[file_descriptor_old]
+    return file_descriptor_new
 
 
 SyscallFilter = namedtuple("SyscallFilter", ["name", "signature", "format", "substitute"])
